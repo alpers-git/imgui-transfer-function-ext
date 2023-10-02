@@ -58,7 +58,7 @@ public:
     void add_colormap(const Colormap &map);
 
     // Add the transfer function UI into the currently active window
-    void draw_ui();
+    void draw_ui(bool show_help = true);
 
     // Returns true if the colormap was updated since the last
     // call to draw_ui

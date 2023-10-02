@@ -123,16 +123,19 @@ void TransferFunctionWidget::add_colormap(const Colormap &map)
     }
 }
 
-void TransferFunctionWidget::draw_ui()
+void TransferFunctionWidget::draw_ui(bool show_help)
 {
     update_gpu_image();
 
     const ImGuiIO &io = ImGui::GetIO();
 
-    ImGui::Text("Transfer Function");
-    ImGui::TextWrapped(
-        "Left click to add a point, right click remove. "
-        "Left click + drag to move points.");
+    if(show_help)
+    {
+        ImGui::Text("Transfer Function");
+        ImGui::TextWrapped(
+            "Left click to add a point, right click remove. "
+            "Left click + drag to move points.");
+    }
 
     if (ImGui::BeginCombo("Colormap", colormaps[selected_colormap].name.c_str())) {
         for (size_t i = 0; i < colormaps.size(); ++i) {
