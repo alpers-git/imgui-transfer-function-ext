@@ -6,7 +6,7 @@
 #include "gl_core_4_5.h"
 #include "imgui.h"
 
-namespace tfnw {
+namespace ImTF {
 
 enum ColorSpace { LINEAR, SRGB };
 

@@ -10,7 +10,7 @@
 
 #include "stb_image.h"
 
-namespace tfnw {
+namespace ImTF {
 
 template <typename T>
 inline T clamp(T x, T min, T max)
