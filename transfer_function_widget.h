@@ -41,6 +41,7 @@ class TransferFunctionWidget {
     std::vector<Colormap> colormaps;
     size_t selected_colormap = 0;
     std::vector<uint8_t> current_colormap;
+    float opacity_scale = 1.f;
 
     std::vector<vec2f> alpha_control_pts = {vec2f(0.f), vec2f(1.f)};
     size_t selected_point = -1;
@@ -58,7 +59,7 @@ public:
     void AddColormap(const Colormap &map);
 
     // Add the transfer function UI into the currently active window
-    void Draw(bool show_help = true);
+    void DrawColorMap(bool show_help = true);
 
     // Returns true if the colormap was updated since the last
     // call to draw_ui
@@ -73,6 +74,12 @@ public:
     // Get back the RGBA32F color data for the transfer function
     // as separate color and opacity vectors
     void GetColormapf(std::vector<float> &color, std::vector<float> &opacity);
+
+    // Draws widget that scales opacity otherwise opacity is 1.0
+    bool DrawOpacityScale();
+
+    // Draws widget that allows you to edit range for the colormap
+    bool DrawRanges();
 
 private:
     void UpdateGPUImage();

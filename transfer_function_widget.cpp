@@ -123,7 +123,7 @@ void TransferFunctionWidget::AddColormap(const Colormap &map)
     }
 }
 
-void TransferFunctionWidget::Draw(bool show_help)
+void TransferFunctionWidget::DrawColorMap(bool show_help)
 {
     UpdateGPUImage();
 
@@ -258,6 +258,19 @@ void TransferFunctionWidget::Draw(bool show_help)
     draw_list->PopClipRect();
 }
 
+bool TransferFunctionWidget::DrawOpacityScale()
+{
+    ImGui::Text("Opacity scale");
+    ImGui::SameLine();
+    if (ImGui::SliderFloat("##1", &opacity_scale, 0.0f, 1.0f))
+    {
+        colormap_changed = true;
+        UpdateColormap();
+        return true;
+    }
+    return false;
+}
+
 bool TransferFunctionWidget::Changed() const
 {
     return colormap_changed;
@@ -340,7 +353,7 @@ void TransferFunctionWidget::UpdateColormap()
         }
         float t = (x - a_it->x) / (high->x - a_it->x);
         float alpha = (1.f - t) * a_it->y + t * high->y;
-        current_colormap[i * 4 + 3] = static_cast<uint8_t>(clamp(alpha * 255.f, 0.f, 255.f));
+        current_colormap[i * 4 + 3] = static_cast<uint8_t>(clamp(alpha * opacity_scale * 255.f, 0.f, 255.f));
     }
 }
 
