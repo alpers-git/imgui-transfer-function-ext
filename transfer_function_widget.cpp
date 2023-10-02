@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <fstream>
 #include "embedded_colormaps.h"
 
 #ifndef TFN_WIDGET_NO_STB_IMAGE_IMPL
@@ -146,6 +147,16 @@ void TransferFunctionWidget::DrawColorMap(bool show_help)
         }
         ImGui::EndCombo();
     }
+    ImGui::SameLine();
+    //reset button to reset the transfer function
+    if (ImGui::Button("Reset")) {
+        alpha_control_pts.clear();
+        alpha_control_pts.push_back(vec2f(0.f, 0.f));
+        alpha_control_pts.push_back(vec2f(1.f, 1.f));
+        selected_colormap = 0;
+        opacity_scale = 1.f;
+        UpdateColormap();
+    }
 
     vec2f canvas_size = ImGui::GetContentRegionAvail();
     canvas_size.y /= 3.f;
@@ -278,12 +289,104 @@ bool TransferFunctionWidget::DrawRanges()
     ImGui::SameLine();
     if (ImGui::InputFloat2("##2", &range.x, "%.3f"))
     {
-        printf("range: %f %f\n", range.x, range.y);
         colormap_changed = true;
         //UpdateColormap(); //TODO
         return true;
     }
     return false;
+}
+
+bool TransferFunctionWidget::LoadState(const std::string &filepath)
+{
+    // Read the file
+    std::ifstream fp;
+    fp.open(filepath, std::ios::in | std::ios::binary);
+    if (!fp.is_open()) {
+        printf("Could not open file %s\n", filepath.c_str());
+        return false;
+    }
+
+    // Read the opacity scale
+    fp >> opacity_scale;
+
+    // Read the range
+    fp >> range.x >> range.y;
+
+    // Read the current colormap size
+    uint32_t current_colormap_size;
+    fp >> current_colormap_size;
+    fp.ignore();  // Ignore the newline character
+
+    // Read the current colormap
+    current_colormap.clear();
+    current_colormap.resize(current_colormap_size);
+    fp.read(reinterpret_cast<char*>(current_colormap.data()), current_colormap_size * sizeof(uint8_t));
+
+    std::string colormap_name;
+    std::getline(fp, colormap_name);  // Read the entire line as the colormap name
+
+    // If the colormap name is not "custom," then look through the list of colormaps
+    // names and set the selected_colormap variable to its index
+    if (colormap_name != "custom") {
+        for (int i = 0; i < colormaps.size(); i++) {
+            if (colormaps[i].name == colormap_name) {
+                selected_colormap = i;
+                break;
+            }
+        }
+    }
+    else {
+        LoadEmbeddedPreset(reinterpret_cast<uint8_t*>(current_colormap.data()), current_colormap.size(), "custom");
+    }
+
+    // Read the control points
+    size_t num_pts;
+    fp >> num_pts;
+    alpha_control_pts.clear();
+    alpha_control_pts.resize(num_pts);
+    for (auto &pt : alpha_control_pts) {
+        fp >> pt.x;
+        fp >> pt.y;
+    }
+    fp.close();
+    printf("Transferfunction read from file %s\n", filepath.c_str());
+    UpdateColormap();
+    UpdateGPUImage();
+    return true;
+}
+
+bool TransferFunctionWidget::SaveState(const std::string &filepath)
+{
+    //create file and write to it
+    std::ofstream fp;
+    fp.open(filepath, std::ios::out | std::ios::binary);
+    //clear the file
+    fp.clear();
+
+    if (!fp.is_open()) {
+        printf("Could not open file %s\n", filepath.c_str());
+        return false;
+    }
+    fp << opacity_scale << std::endl << range.x << " " << range.y << std::endl;
+    fp << current_colormap.size() << std::endl;
+
+    // Write the color map as binary data
+    fp.write(reinterpret_cast<char*>(current_colormap.data()), current_colormap.size() * sizeof(uint8_t));
+
+    //write the name of the colormap
+    if (selected_colormap >= 0 && selected_colormap < colormaps.size())
+        fp << colormaps[selected_colormap].name << std::endl;
+    else
+        fp << "custom" << std::endl;
+
+    //write control point positions
+    fp << alpha_control_pts.size() << std::endl;
+    for (const auto &pt : alpha_control_pts) {
+        fp << pt.x << " " << pt.y << std::endl;
+    }
+    fp.close();
+    printf("Transferfunction written to file %s\n", filepath.c_str());
+    return true;
 }
 
 bool TransferFunctionWidget::Changed() const

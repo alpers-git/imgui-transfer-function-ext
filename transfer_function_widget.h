@@ -82,6 +82,12 @@ public:
     // Draws widget that allows you to edit range for the colormap
     bool DrawRanges();
 
+    // Load a state from a file
+    bool LoadState(const std::string &filepath);
+
+    // Save a state to a file
+    bool SaveState(const std::string &filepath);
+
 private:
     void UpdateGPUImage();
 
