@@ -50,6 +50,7 @@ class TransferFunctionWidget {
     bool gpu_image_stale = true;
     bool colormap_changed = true;
     GLuint colormap_img = -1;
+    ImVec2 range = ImVec2(0.f, 1.f);
 
 public:
     TransferFunctionWidget();

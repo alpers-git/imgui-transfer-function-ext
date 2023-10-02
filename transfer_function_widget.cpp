@@ -272,6 +272,20 @@ bool TransferFunctionWidget::DrawOpacityScale()
     return false;
 }
 
+bool TransferFunctionWidget::DrawRanges()
+{
+    ImGui::Text("Range:");
+    ImGui::SameLine();
+    if (ImGui::InputFloat2("##2", &range.x, "%.3f"))
+    {
+        printf("range: %f %f\n", range.x, range.y);
+        colormap_changed = true;
+        //UpdateColormap(); //TODO
+        return true;
+    }
+    return false;
+}
+
 bool TransferFunctionWidget::Changed() const
 {
     return colormap_changed;
