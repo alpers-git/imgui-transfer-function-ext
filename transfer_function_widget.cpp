@@ -82,6 +82,11 @@ TransferFunctionWidget::vec2f::operator ImVec2() const
 
 TransferFunctionWidget::TransferFunctionWidget()
 {
+    if (ogl_LoadFunctions() == ogl_LOAD_FAILED)
+    {
+        std::cerr << "Failed to initialize OpenGL\n";
+        return;
+    }
     // Load up the embedded colormaps as the default options
     load_embedded_preset(paraview_cool_warm, sizeof(paraview_cool_warm), "ParaView Cool Warm");
     load_embedded_preset(rainbow, sizeof(rainbow), "Rainbow");
