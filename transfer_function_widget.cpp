@@ -88,26 +88,26 @@ TransferFunctionWidget::TransferFunctionWidget()
         return;
     }
     // Load up the embedded colormaps as the default options
-    load_embedded_preset(paraview_cool_warm, sizeof(paraview_cool_warm), "ParaView Cool Warm");
-    load_embedded_preset(rainbow, sizeof(rainbow), "Rainbow");
-    load_embedded_preset(matplotlib_plasma, sizeof(matplotlib_plasma), "Matplotlib Plasma");
-    load_embedded_preset(matplotlib_virdis, sizeof(matplotlib_virdis), "Matplotlib Virdis");
-    load_embedded_preset(
+    LoadEmbeddedPreset(paraview_cool_warm, sizeof(paraview_cool_warm), "ParaView Cool Warm");
+    LoadEmbeddedPreset(rainbow, sizeof(rainbow), "Rainbow");
+    LoadEmbeddedPreset(matplotlib_plasma, sizeof(matplotlib_plasma), "Matplotlib Plasma");
+    LoadEmbeddedPreset(matplotlib_virdis, sizeof(matplotlib_virdis), "Matplotlib Virdis");
+    LoadEmbeddedPreset(
         samsel_linear_green, sizeof(samsel_linear_green), "Samsel Linear Green");
-    load_embedded_preset(
+    LoadEmbeddedPreset(
         samsel_linear_ygb_1211g, sizeof(samsel_linear_ygb_1211g), "Samsel Linear YGB 1211G");
-    load_embedded_preset(cool_warm_extended, sizeof(cool_warm_extended), "Cool Warm Extended");
-    load_embedded_preset(blackbody, sizeof(blackbody), "Black Body");
-    load_embedded_preset(jet, sizeof(jet), "Jet");
-    load_embedded_preset(blue_gold, sizeof(blue_gold), "Blue Gold");
-    load_embedded_preset(ice_fire, sizeof(ice_fire), "Ice Fire");
-    load_embedded_preset(nic_edge, sizeof(nic_edge), "nic Edge");
+    LoadEmbeddedPreset(cool_warm_extended, sizeof(cool_warm_extended), "Cool Warm Extended");
+    LoadEmbeddedPreset(blackbody, sizeof(blackbody), "Black Body");
+    LoadEmbeddedPreset(jet, sizeof(jet), "Jet");
+    LoadEmbeddedPreset(blue_gold, sizeof(blue_gold), "Blue Gold");
+    LoadEmbeddedPreset(ice_fire, sizeof(ice_fire), "Ice Fire");
+    LoadEmbeddedPreset(nic_edge, sizeof(nic_edge), "nic Edge");
 
     // Initialize the colormap alpha channel w/ a linear ramp
-    update_colormap();
+    UpdateColormap();
 }
 
-void TransferFunctionWidget::add_colormap(const Colormap &map)
+void TransferFunctionWidget::AddColormap(const Colormap &map)
 {
     colormaps.push_back(map);
 
@@ -123,9 +123,9 @@ void TransferFunctionWidget::add_colormap(const Colormap &map)
     }
 }
 
-void TransferFunctionWidget::draw_ui(bool show_help)
+void TransferFunctionWidget::Draw(bool show_help)
 {
-    update_gpu_image();
+    UpdateGPUImage();
 
     const ImGuiIO &io = ImGui::GetIO();
 
@@ -141,7 +141,7 @@ void TransferFunctionWidget::draw_ui(bool show_help)
         for (size_t i = 0; i < colormaps.size(); ++i) {
             if (ImGui::Selectable(colormaps[i].name.c_str(), selected_colormap == i)) {
                 selected_colormap = i;
-                update_colormap();
+                UpdateColormap();
             }
         }
         ImGui::EndCombo();
@@ -222,7 +222,7 @@ void TransferFunctionWidget::draw_ui(bool show_help)
                     });
                 selected_point = std::distance(alpha_control_pts.begin(), fnd);
             }
-            update_colormap();
+            UpdateColormap();
         } else if (ImGui::IsMouseClicked(1)) {
             selected_point = -1;
             // Find and remove the point
@@ -237,7 +237,7 @@ void TransferFunctionWidget::draw_ui(bool show_help)
                 fnd != alpha_control_pts.end() - 1) {
                 alpha_control_pts.erase(fnd);
             }
-            update_colormap();
+            UpdateColormap();
         } else {
             selected_point = -1;
         }
@@ -258,18 +258,18 @@ void TransferFunctionWidget::draw_ui(bool show_help)
     draw_list->PopClipRect();
 }
 
-bool TransferFunctionWidget::changed() const
+bool TransferFunctionWidget::Changed() const
 {
     return colormap_changed;
 }
 
-std::vector<uint8_t> TransferFunctionWidget::get_colormap()
+std::vector<uint8_t> TransferFunctionWidget::GetColormap()
 {
     colormap_changed = false;
     return current_colormap;
 }
 
-std::vector<float> TransferFunctionWidget::get_colormapf()
+std::vector<float> TransferFunctionWidget::GetColormapf()
 {
     colormap_changed = false;
     std::vector<float> colormapf(current_colormap.size(), 0.f);
@@ -279,7 +279,7 @@ std::vector<float> TransferFunctionWidget::get_colormapf()
     return colormapf;
 }
 
-void TransferFunctionWidget::get_colormapf(std::vector<float> &color,
+void TransferFunctionWidget::GetColormapf(std::vector<float> &color,
                                            std::vector<float> &opacity)
 {
     colormap_changed = false;
@@ -293,7 +293,7 @@ void TransferFunctionWidget::get_colormapf(std::vector<float> &color,
     }
 }
 
-void TransferFunctionWidget::update_gpu_image()
+void TransferFunctionWidget::UpdateGPUImage()
 {
     GLint prev_tex_2d = 0;
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &prev_tex_2d);
@@ -322,7 +322,7 @@ void TransferFunctionWidget::update_gpu_image()
     glBindTexture(GL_TEXTURE_2D, prev_tex_2d);
 }
 
-void TransferFunctionWidget::update_colormap()
+void TransferFunctionWidget::UpdateColormap()
 {
     colormap_changed = true;
     gpu_image_stale = true;
@@ -344,7 +344,7 @@ void TransferFunctionWidget::update_colormap()
     }
 }
 
-void TransferFunctionWidget::load_embedded_preset(const uint8_t *buf,
+void TransferFunctionWidget::LoadEmbeddedPreset(const uint8_t *buf,
                                                   size_t size,
                                                   const std::string &name)
 {
