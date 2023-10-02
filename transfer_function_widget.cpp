@@ -148,6 +148,7 @@ void TransferFunctionWidget::DrawColorMap(bool show_help)
     }
 
     vec2f canvas_size = ImGui::GetContentRegionAvail();
+    canvas_size.y /= 3.f;
     // Note: If you're not using OpenGL for rendering your UI, the setup for
     // displaying the colormap texture in the UI will need to be updated.
     size_t tmp = colormap_img;
