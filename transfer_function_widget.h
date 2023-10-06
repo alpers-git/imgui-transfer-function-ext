@@ -41,7 +41,6 @@ class TransferFunctionWidget {
     std::vector<Colormap> colormaps;
     size_t selected_colormap = 0;
     std::vector<uint8_t> current_colormap;
-    float opacity_scale = 1.f;
 
     std::vector<vec2f> alpha_control_pts = {vec2f(0.f), vec2f(1.f)};
     size_t selected_point = -1;
@@ -50,7 +49,6 @@ class TransferFunctionWidget {
     bool gpu_image_stale = true;
     bool colormap_changed = true;
     GLuint colormap_img = -1;
-    ImVec2 range = ImVec2(0.f, 1.f);
 
 public:
     TransferFunctionWidget();
@@ -88,6 +86,8 @@ public:
     // Save a state to a file
     bool SaveState(const std::string &filepath);
 
+    float opacity_scale = 1.f;
+    ImVec2 range = ImVec2(0.f, 1.f);
 private:
     void UpdateGPUImage();
 
