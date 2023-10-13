@@ -289,6 +289,9 @@ bool TransferFunctionWidget::DrawRanges()
     ImGui::SameLine();
     if (ImGui::InputFloat2("##2", &range.x, "%.3f"))
     {
+        //clamp min below max and max over min
+        range.x = std::min(range.x, range.y-1e-6f);
+        range.y = std::max(range.x+1e-6f, range.y);
         range_changed = true;
         return true;
     }
