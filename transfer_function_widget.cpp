@@ -276,7 +276,7 @@ bool TransferFunctionWidget::DrawOpacityScale()
     ImGui::SameLine();
     if (ImGui::SliderFloat("##1", &opacity_scale, 0.0f, 1.0f))
     {
-        colormap_changed = true;
+        opacity_scale_changed = true;
         UpdateColormap();
         return true;
     }
@@ -289,8 +289,7 @@ bool TransferFunctionWidget::DrawRanges()
     ImGui::SameLine();
     if (ImGui::InputFloat2("##2", &range.x, "%.3f"))
     {
-        colormap_changed = true;
-        //UpdateColormap(); //TODO
+        range_changed = true;
         return true;
     }
     return false;
@@ -391,7 +390,22 @@ bool TransferFunctionWidget::SaveState(const std::string &filepath)
 
 bool TransferFunctionWidget::Changed() const
 {
+    return colormap_changed || opacity_scale_changed || range_changed;
+}
+
+bool TransferFunctionWidget::ColorMapChanged() const
+{
     return colormap_changed;
+}
+
+bool TransferFunctionWidget::OpacityScaleChanged() const
+{
+    return opacity_scale_changed;
+}
+
+bool TransferFunctionWidget::RangeChanged() const
+{
+    return range_changed;
 }
 
 std::vector<uint8_t> TransferFunctionWidget::GetColormap()
@@ -422,6 +436,18 @@ void TransferFunctionWidget::GetColormapf(std::vector<float> &color,
         color[i * 3 + 2] = current_colormap[i * 4 + 2] / 255.f;
         opacity[i] = current_colormap[i * 4 + 3] / 255.f;
     }
+}
+
+float TransferFunctionWidget::GetOpacityScale()
+{
+    opacity_scale_changed = false;
+    return opacity_scale;
+}
+
+ImVec2 TransferFunctionWidget::GetRange()
+{
+    range_changed = false;
+    return range;
 }
 
 void TransferFunctionWidget::UpdateGPUImage()

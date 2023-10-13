@@ -45,9 +45,14 @@ class TransferFunctionWidget {
     std::vector<vec2f> alpha_control_pts = {vec2f(0.f), vec2f(1.f)};
     size_t selected_point = -1;
 
+    float opacity_scale = 1.f;
+    ImVec2 range = ImVec2(0.f, 1.f);
+
     bool clicked_on_item = false;
     bool gpu_image_stale = true;
     bool colormap_changed = true;
+    bool opacity_scale_changed = true;
+    bool range_changed = true;
     GLuint colormap_img = -1;
 
 public:
@@ -60,9 +65,21 @@ public:
     // Add the transfer function UI into the currently active window
     void DrawColorMap(bool show_help = true);
 
-    // Returns true if the colormap was updated since the last
+    // Returns true if any of the widgets was updated since the last
     // call to draw_ui
     bool Changed() const;
+
+    // Returns true if the colormap was updated since the last
+    // call to draw_ui
+    bool ColorMapChanged() const;
+
+    // Returns true if the opacity scale was updated since the last
+    // call to draw_ui
+    bool OpacityScaleChanged() const;
+
+    // Returns true if the range was updated since the last
+    // call to draw_ui
+    bool RangeChanged() const;
 
     // Get back the RGBA8 color data for the transfer function
     std::vector<uint8_t> GetColormap();
@@ -73,6 +90,12 @@ public:
     // Get back the RGBA32F color data for the transfer function
     // as separate color and opacity vectors
     void GetColormapf(std::vector<float> &color, std::vector<float> &opacity);
+
+    // Get back the opacity scale
+    float GetOpacityScale();
+
+    // Get back the range
+    ImVec2 GetRange();
 
     // Draws widget that scales opacity otherwise opacity is 1.0
     bool DrawOpacityScale();
@@ -86,8 +109,6 @@ public:
     // Save a state to a file
     bool SaveState(const std::string &filepath);
 
-    float opacity_scale = 1.f;
-    ImVec2 range = ImVec2(0.f, 1.f);
 private:
     void UpdateGPUImage();
 
