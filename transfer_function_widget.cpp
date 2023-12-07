@@ -93,6 +93,8 @@ TransferFunctionWidget::TransferFunctionWidget()
     LoadEmbeddedPreset(rainbow, sizeof(rainbow), "Rainbow");
     LoadEmbeddedPreset(matplotlib_plasma, sizeof(matplotlib_plasma), "Matplotlib Plasma");
     LoadEmbeddedPreset(matplotlib_virdis, sizeof(matplotlib_virdis), "Matplotlib Virdis");
+    LoadEmbeddedPreset(matplotlib_BrBg, sizeof(matplotlib_BrBg), "Matplotlib BrBg");
+    LoadEmbeddedPreset(matplotlib_terrain, sizeof(matplotlib_terrain), "Matplotlib Terrain");
     LoadEmbeddedPreset(
         samsel_linear_green, sizeof(samsel_linear_green), "Samsel Linear Green");
     LoadEmbeddedPreset(
@@ -103,6 +105,8 @@ TransferFunctionWidget::TransferFunctionWidget()
     LoadEmbeddedPreset(blue_gold, sizeof(blue_gold), "Blue Gold");
     LoadEmbeddedPreset(ice_fire, sizeof(ice_fire), "Ice Fire");
     LoadEmbeddedPreset(nic_edge, sizeof(nic_edge), "nic Edge");
+    LoadEmbeddedPreset(cube_helix, sizeof(cube_helix), "Cube Helix");
+    LoadEmbeddedPreset(linear_grayscale, sizeof(linear_grayscale), "Linear Grayscale");
 
     // Initialize the colormap alpha channel w/ a linear ramp
     UpdateColormap();
