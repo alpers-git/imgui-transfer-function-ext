@@ -91,6 +91,9 @@ TransferFunctionWidget::TransferFunctionWidget()
     // Load up the embedded colormaps as the default options
     LoadEmbeddedPreset(paraview_cool_warm, sizeof(paraview_cool_warm), "ParaView Cool Warm");
     LoadEmbeddedPreset(rainbow, sizeof(rainbow), "Rainbow");
+    LoadEmbeddedPreset(reds, sizeof(reds), "Reds");
+    LoadEmbeddedPreset(greens, sizeof(greens), "Greens");
+    LoadEmbeddedPreset(blues, sizeof(blues), "Blues");
     LoadEmbeddedPreset(matplotlib_plasma, sizeof(matplotlib_plasma), "Matplotlib Plasma");
     LoadEmbeddedPreset(matplotlib_virdis, sizeof(matplotlib_virdis), "Matplotlib Virdis");
     LoadEmbeddedPreset(matplotlib_BrBg, sizeof(matplotlib_BrBg), "Matplotlib BrBg");
