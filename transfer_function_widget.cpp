@@ -95,6 +95,7 @@ TransferFunctionWidget::TransferFunctionWidget()
     LoadEmbeddedPreset(matplotlib_virdis, sizeof(matplotlib_virdis), "Matplotlib Virdis");
     LoadEmbeddedPreset(matplotlib_BrBg, sizeof(matplotlib_BrBg), "Matplotlib BrBg");
     LoadEmbeddedPreset(matplotlib_terrain, sizeof(matplotlib_terrain), "Matplotlib Terrain");
+    LoadEmbeddedPreset(tacc_outlier, sizeof(tacc_outlier), "TACC Outlier");
     LoadEmbeddedPreset(
         samsel_linear_green, sizeof(samsel_linear_green), "Samsel Linear Green");
     LoadEmbeddedPreset(
