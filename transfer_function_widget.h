@@ -54,9 +54,10 @@ class TransferFunctionWidget {
     bool opacity_scale_changed = true;
     bool range_changed = true;
     GLuint colormap_img = -1;
+    bool noGui;
 
 public:
-    TransferFunctionWidget();
+    TransferFunctionWidget(bool noGui = false);
 
     // Add a colormap preset. The image should be a 1D RGBA8 image, if the image
     // is provided in sRGBA colorspace it will be linearized

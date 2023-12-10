@@ -81,9 +81,10 @@ TransferFunctionWidget::vec2f::operator ImVec2() const
     return ImVec2(x, y);
 }
 
-TransferFunctionWidget::TransferFunctionWidget()
+TransferFunctionWidget::TransferFunctionWidget(bool noGui)
+    :noGui(noGui)
 {
-    if (ogl_LoadFunctions() == ogl_LOAD_FAILED)
+    if (!noGui && ogl_LoadFunctions() == ogl_LOAD_FAILED)
     {
         std::cerr << "Failed to initialize OpenGL\n";
         return;
@@ -134,6 +135,11 @@ void TransferFunctionWidget::AddColormap(const Colormap &map)
 
 void TransferFunctionWidget::DrawColorMap(bool show_help)
 {
+    if(noGui)
+    {
+        std::cerr << "TransferFunctionWidget::DrawColorMap() called with noGui set to true\n";
+        return;
+    }
     UpdateGPUImage();
 
     const ImGuiIO &io = ImGui::GetIO();
@@ -280,6 +286,11 @@ void TransferFunctionWidget::DrawColorMap(bool show_help)
 
 bool TransferFunctionWidget::DrawOpacityScale()
 {
+    if(noGui)
+    {
+        std::cerr << "TransferFunctionWidget::DrawOpacityScale() called with noGui set to true\n";
+        return false;
+    }
     ImGui::Text("Opacity scale");
     ImGui::SameLine();
     if (ImGui::SliderFloat("##1", &opacity_scale, 0.0f, 1.0f))
@@ -293,6 +304,11 @@ bool TransferFunctionWidget::DrawOpacityScale()
 
 bool TransferFunctionWidget::DrawRanges()
 {
+    if(noGui)
+    {
+        std::cerr << "TransferFunctionWidget::DrawRanges() called with noGui set to true\n";
+        return false;
+    }
     ImGui::Text("Range:");
     ImGui::SameLine();
     if (ImGui::InputFloat2("##2", &range.x, "%.3f"))
@@ -463,6 +479,11 @@ ImVec2 TransferFunctionWidget::GetRange()
 
 void TransferFunctionWidget::UpdateGPUImage()
 {
+    if(noGui)
+    {
+        std::cerr << "TransferFunctionWidget::UpdateGPUImage() called with noGui set to true\n";
+        return;
+    }
     GLint prev_tex_2d = 0;
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &prev_tex_2d);
 
