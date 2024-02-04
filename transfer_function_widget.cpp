@@ -112,6 +112,9 @@ TransferFunctionWidget::TransferFunctionWidget(bool noGui)
     LoadEmbeddedPreset(nic_edge, sizeof(nic_edge), "nic Edge");
     LoadEmbeddedPreset(cube_helix, sizeof(cube_helix), "Cube Helix");
     LoadEmbeddedPreset(linear_grayscale, sizeof(linear_grayscale), "Linear Grayscale");
+    LoadEmbeddedPreset(flat_red, sizeof(flat_red), "flat red");
+    LoadEmbeddedPreset(flat_green, sizeof(flat_green), "flat green");
+    LoadEmbeddedPreset(flat_blue, sizeof(flat_blue), "flat blue");
 
     // Initialize the colormap alpha channel w/ a linear ramp
     UpdateColormap();
