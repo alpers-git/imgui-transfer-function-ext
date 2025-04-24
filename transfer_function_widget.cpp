@@ -180,7 +180,7 @@ void TransferFunctionWidget::DrawColorMap(bool show_help)
     // Note: If you're not using OpenGL for rendering your UI, the setup for
     // displaying the colormap texture in the UI will need to be updated.
     size_t tmp = colormap_img;
-    ImGui::Image(reinterpret_cast<void *>(tmp), ImVec2(canvas_size.x, 16));
+    ImGui::Image(static_cast<ImTextureID>(tmp), ImVec2(canvas_size.x, 16));
     vec2f canvas_pos = ImGui::GetCursorScreenPos();
     canvas_size.y -= 20;
 
