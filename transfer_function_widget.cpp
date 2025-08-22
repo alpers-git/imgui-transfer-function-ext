@@ -305,6 +305,78 @@ bool TransferFunctionWidget::DrawOpacityScale()
     return false;
 }
 
+bool TransferFunctionWidget::DrawRuler(vec2f range)
+{
+    if(noGui)
+    {
+        std::cerr << "TransferFunctionWidget::DrawRuler() called with noGui set to true\n";
+        return false;
+    }
+
+    // Get the canvas dimensions and position
+    vec2f canvas_size = ImGui::GetContentRegionAvail();
+    canvas_size.y = 30.0f; // Height for the ruler
+    vec2f canvas_pos = ImGui::GetCursorScreenPos();
+    
+    ImDrawList *draw_list = ImGui::GetWindowDrawList();
+    
+    // Draw background for ruler
+    draw_list->AddRectFilled(canvas_pos, canvas_pos + canvas_size, 
+                            ImColor(0, 0, 0, 255));
+    draw_list->AddRect(canvas_pos, canvas_pos + canvas_size, 
+                      ImColor(100, 100, 100, 0));
+
+    // Number of ticks to draw that scales with the canvas size
+    const int num_ticks = std::max(static_cast<int>(canvas_size.x / 50.0f), 2);
+    const float tick_spacing = canvas_size.x / (num_ticks - 1);
+    const float tick_height = 8.0f;
+    const float range_span = range.y - range.x;
+    
+    // Draw ticks and labels
+    for (int i = 0; i < num_ticks; ++i) {
+        float x_pos = canvas_pos.x + i * tick_spacing;
+        float tick_top = canvas_pos.y + 2.0f;
+        float tick_bottom = tick_top + tick_height;
+        
+        // Draw tick mark
+        draw_list->AddLine(ImVec2(x_pos, tick_top), ImVec2(x_pos, tick_bottom), 
+                          ImColor(200, 200, 200, 255), 1.0f);
+        
+        // Calculate the value this tick represents
+        float normalized_pos = static_cast<float>(i) / (num_ticks - 1);
+        float value = range.x + normalized_pos * range_span;
+        
+        // Format the value string
+        char value_str[32];
+        if (std::abs(value) < 0.001f && std::abs(value) > 0.0f) {
+            // Use scientific notation for very small numbers
+            snprintf(value_str, sizeof(value_str), "%.1e", value);
+        } else if (std::abs(value) >= 1000.0f) {
+            // Use scientific notation for large numbers
+            snprintf(value_str, sizeof(value_str), "%.1e", value);
+        } else {
+            // Use fixed point notation for reasonable numbers
+            snprintf(value_str, sizeof(value_str), "%.2f", value);
+        }
+        
+        // Calculate text size and position for centering
+        ImVec2 text_size = ImGui::CalcTextSize(value_str);
+        float text_x = x_pos - text_size.x * 0.5f;
+        float text_y = tick_bottom + 2.0f;
+        
+        // Ensure text doesn't go outside canvas bounds
+        text_x = std::max(canvas_pos.x, std::min(text_x, canvas_pos.x + canvas_size.x - text_size.x));
+        
+        // Draw the value label
+        draw_list->AddText(ImVec2(text_x, text_y), ImColor(200, 200, 200, 255), value_str);
+    }
+    
+    // Reserve space for the ruler
+    ImGui::Dummy(canvas_size);
+    
+    return false; // No interaction/changes made
+}
+
 bool TransferFunctionWidget::DrawRanges()
 {
     if(noGui)

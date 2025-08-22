@@ -101,6 +101,9 @@ public:
     // Draws widget that scales opacity otherwise opacity is 1.0
     bool DrawOpacityScale();
 
+    // Draws the widget that displays the data values as a ruler
+    bool DrawRuler(vec2f range);
+
     // Draws widget that allows you to edit range for the colormap
     bool DrawRanges();
 
