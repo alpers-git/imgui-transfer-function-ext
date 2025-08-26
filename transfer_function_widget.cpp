@@ -305,7 +305,7 @@ bool TransferFunctionWidget::DrawOpacityScale()
     return false;
 }
 
-bool TransferFunctionWidget::DrawRuler(vec2f range)
+bool TransferFunctionWidget::DrawRuler(vec2f data_range)
 {
     if(noGui)
     {
@@ -330,7 +330,17 @@ bool TransferFunctionWidget::DrawRuler(vec2f range)
     const int num_ticks = std::max(static_cast<int>(canvas_size.x / 50.0f), 2);
     const float tick_spacing = canvas_size.x / (num_ticks - 1);
     const float tick_height = 8.0f;
-    const float range_span = range.y - range.x;
+    
+    // Calculate the actual data range that the transfer function covers
+    // data_range is the full data range (min/max of actual data)
+    // range is the transfer function's relative range mapping
+    const float data_span = data_range.y - data_range.x;
+    const float tf_range_span = range.y - range.x;
+    
+    // The actual data values that map to the start and end of the transfer function
+    const float actual_min = data_range.x + range.x * data_span;
+    const float actual_max = data_range.x + range.y * data_span;
+    const float actual_span = actual_max - actual_min;
     
     // Draw ticks and labels
     for (int i = 0; i < num_ticks; ++i) {
@@ -342,9 +352,9 @@ bool TransferFunctionWidget::DrawRuler(vec2f range)
         draw_list->AddLine(ImVec2(x_pos, tick_top), ImVec2(x_pos, tick_bottom), 
                           ImColor(200, 200, 200, 255), 1.0f);
         
-        // Calculate the value this tick represents
+        // Calculate the actual data value this tick represents
         float normalized_pos = static_cast<float>(i) / (num_ticks - 1);
-        float value = range.x + normalized_pos * range_span;
+        float value = actual_min + normalized_pos * actual_span;
         
         // Format the value string
         char value_str[32];
