@@ -107,6 +107,10 @@ public:
     // Draws widget that allows you to edit range for the colormap
     bool DrawRanges();
 
+    // Overlays the colormap bar on the image
+    void OverlayColormapBar(std::vector<uint32_t>& image, int imageWidth, int imageHeight, 
+                           vec2f pos, vec2f dataRange, float scale, bool flip_vertically = false);
+
     // Load a state from a file
     bool LoadState(const std::string &filepath);
 
@@ -119,6 +123,10 @@ private:
     void UpdateColormap();
 
     void LoadEmbeddedPreset(const uint8_t *buf, size_t size, const std::string &name);
+    
+    // Helper function for drawing bitmap text on images
+    void DrawBitmapNumber(std::vector<uint32_t>& image, int imageWidth, int imageHeight, 
+                         float value, int x, int y, float scale, bool flip_vertically = false);
 };
 }
 

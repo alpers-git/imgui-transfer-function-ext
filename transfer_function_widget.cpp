@@ -407,6 +407,228 @@ bool TransferFunctionWidget::DrawRanges()
     return false;
 }
 
+void TransferFunctionWidget::OverlayColormapBar(std::vector<uint32_t>& image, int imageWidth, int imageHeight, 
+                                               vec2f pos, vec2f dataRange, float scale, bool flip_vertically)
+{
+    // Base dimensions for the colormap bar
+    const int baseBarWidth = 40;
+    const int baseBarHeight = 200;
+    const int baseTickLength = 8;
+    const int numTicks = 5; // Including min and max
+    
+    // Scale the dimensions
+    const int barWidth = static_cast<int>(baseBarWidth * scale);
+    const int barHeight = static_cast<int>(baseBarHeight * scale);
+    const int tickLength = static_cast<int>(baseTickLength * scale);
+    
+    // Calculate bar position using distance from bottom-left corner
+    // pos.x is distance from left edge, pos.y is distance from bottom edge
+    // Account for vertical flipping if enabled
+    int barX = static_cast<int>(pos.x);
+    int barY;
+    if (flip_vertically) {
+        // When vertically flipped, top becomes bottom, so use pos.y directly from top
+        barY = static_cast<int>(pos.y);
+    } else {
+        // Normal case: convert from bottom-left to top-left coordinates
+        barY = imageHeight - static_cast<int>(pos.y) - barHeight;
+    }
+    
+    // Skip if bar would be outside the image
+    if (barX < 0 || barY < 0 || pos.x >= imageWidth || pos.y >= imageHeight) return;
+    
+    // Get colormap data
+    auto colormap = GetColormap();
+    if (colormap.empty()) return;
+    
+    // Draw the colormap bar (vertical)
+    for (int y = 0; y < barHeight; ++y) {
+        // Map y position to colormap index 
+        // Account for vertical flipping
+        float t;
+        if (flip_vertically) {
+            // When flipped, y=0 (top of bar) should show minimum value (t=0)
+            // y=barHeight-1 (bottom of bar) should show maximum value (t=1)
+            t = (float)y / (barHeight - 1);
+        } else {
+            // Normal case: y=0 (top of bar) should show maximum value (t=1)
+            // y=barHeight-1 (bottom of bar) should show minimum value (t=0)
+            t = 1.0f - (float)y / (barHeight - 1);
+        }
+        int cmapIndex = static_cast<int>(t * (colormap.size() / 4 - 1)) * 4;
+        cmapIndex = std::max(0, std::min(cmapIndex, static_cast<int>(colormap.size()) - 4));
+        
+        // Extract RGBA values from colormap
+        uint8_t r = colormap[cmapIndex + 0];
+        uint8_t g = colormap[cmapIndex + 1];
+        uint8_t b = colormap[cmapIndex + 2];
+        uint8_t a = colormap[cmapIndex + 3];
+        
+        // Convert to uint32_t (assuming RGBA format)
+        uint32_t color = (a << 24) | (b << 16) | (g << 8) | r;
+        
+        // Draw horizontal line for this color
+        for (int x = 0; x < barWidth; ++x) {
+            int pixelX = barX + x;
+            int pixelY = barY + y;
+            
+            if (pixelX >= 0 && pixelX < imageWidth && 
+                pixelY >= 0 && pixelY < imageHeight) {
+                int pixelIndex = pixelY * imageWidth + pixelX;
+                image[pixelIndex] = color;
+            }
+        }
+    }
+    
+    // Calculate the actual data range that the transfer function covers
+    ImVec2 tfRange = GetRange();
+    const float dataSpan = dataRange.y - dataRange.x;
+    const float actualMin = dataRange.x + tfRange.x * dataSpan;
+    const float actualMax = dataRange.x + tfRange.y * dataSpan;
+    const float actualSpan = actualMax - actualMin;
+    
+    // Draw ticks and labels
+    for (int tick = 0; tick < numTicks; ++tick) {
+        float t = static_cast<float>(tick) / (numTicks - 1);
+        // Calculate tick position accounting for vertical flipping
+        int tickY;
+        if (flip_vertically) {
+            // When flipped, tick=0 should be at top (min value), tick=numTicks-1 should be at bottom (max value)
+            tickY = barY + static_cast<int>(t * (barHeight - 1));
+        } else {
+            // Normal case: tick=0 should be at bottom (min value), tick=numTicks-1 should be at top (max value)
+            tickY = barY + barHeight - 1 - static_cast<int>(t * (barHeight - 1));
+        }
+        float value = actualMin + t * actualSpan;
+        
+        // Draw tick mark (white line extending to the right)
+        uint32_t tickColor = 0xFFFFFFFF; // White
+        for (int i = 0; i < tickLength; ++i) {
+            int tickX = barX + barWidth + i;
+            if (tickX < imageWidth && tickY >= 0 && tickY < imageHeight) {
+                int pixelIndex = tickY * imageWidth + tickX;
+                image[pixelIndex] = tickColor;
+            }
+        }
+        
+        // Draw simple number text
+        DrawBitmapNumber(image, imageWidth, imageHeight, value, 
+                        barX + barWidth + tickLength + 2, tickY - 4, scale, flip_vertically);
+    }
+    
+    // Draw border around the colormap bar
+    uint32_t borderColor = 0xFFFFFFFF; // White border
+    // Top and bottom borders
+    for (int x = 0; x < barWidth; ++x) {
+        int topPixelIndex = barY * imageWidth + (barX + x);
+        int bottomPixelIndex = (barY + barHeight - 1) * imageWidth + (barX + x);
+        if (barX + x >= 0 && barX + x < imageWidth) {
+            if (barY >= 0 && barY < imageHeight)
+                image[topPixelIndex] = borderColor;
+            if (barY + barHeight - 1 >= 0 && barY + barHeight - 1 < imageHeight)
+                image[bottomPixelIndex] = borderColor;
+        }
+    }
+    // Left and right borders
+    for (int y = 0; y < barHeight; ++y) {
+        int leftPixelIndex = (barY + y) * imageWidth + barX;
+        int rightPixelIndex = (barY + y) * imageWidth + (barX + barWidth - 1);
+        if (barY + y >= 0 && barY + y < imageHeight) {
+            if (barX >= 0 && barX < imageWidth)
+                image[leftPixelIndex] = borderColor;
+            if (barX + barWidth - 1 >= 0 && barX + barWidth - 1 < imageWidth)
+                image[rightPixelIndex] = borderColor;
+        }
+    }
+}
+
+void TransferFunctionWidget::DrawBitmapNumber(std::vector<uint32_t>& image, int imageWidth, int imageHeight, 
+                                             float value, int x, int y, float scale, bool flip_vertically)
+{
+    // Format the number
+    char buffer[32];
+    if (std::abs(value) < 0.01f && value != 0.0f) {
+        snprintf(buffer, sizeof(buffer), "%.1e", value);
+    } else if (std::abs(value) >= 1000.0f) {
+        snprintf(buffer, sizeof(buffer), "%.1e", value);
+    } else {
+        snprintf(buffer, sizeof(buffer), "%.2f", value);
+    }
+    
+    // Simple 5x7 bitmap font for digits and basic characters
+    // Each row represents a horizontal scan line from top to bottom
+    // Bits are read from MSB to LSB (left to right)
+    static const uint8_t font5x7[][7] = {
+        {0x70, 0x88, 0x88, 0x88, 0x88, 0x88, 0x70}, // '0'
+        {0x20, 0x60, 0x20, 0x20, 0x20, 0x20, 0x70}, // '1'
+        {0x70, 0x88, 0x08, 0x10, 0x20, 0x40, 0xF8}, // '2'
+        {0xF8, 0x10, 0x20, 0x10, 0x08, 0x88, 0x70}, // '3'
+        {0x10, 0x30, 0x50, 0x90, 0xF8, 0x10, 0x10}, // '4'
+        {0xF8, 0x80, 0xF0, 0x08, 0x08, 0x88, 0x70}, // '5'
+        {0x30, 0x40, 0x80, 0xF0, 0x88, 0x88, 0x70}, // '6'
+        {0xF8, 0x08, 0x10, 0x20, 0x40, 0x40, 0x40}, // '7'
+        {0x70, 0x88, 0x88, 0x70, 0x88, 0x88, 0x70}, // '8'
+        {0x70, 0x88, 0x88, 0x78, 0x08, 0x10, 0x60}, // '9'
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, // ' ' (space)
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x60, 0x60}, // '.'
+        {0x00, 0x00, 0x00, 0xF8, 0x00, 0x00, 0x00}, // '-'
+        {0x70, 0x88, 0x08, 0x10, 0x20, 0x00, 0x20}, // '?'
+        {0x70, 0x88, 0x88, 0xA8, 0xA8, 0xB0, 0x70}, // '@' (used for 'e' in scientific notation)
+        {0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0xF8}, // '+' 
+    };
+    
+    // Character mapping
+    auto getCharIndex = [](char c) -> int {
+        if (c >= '0' && c <= '9') return c - '0';
+        switch (c) {
+            case ' ': return 10;
+            case '.': return 11;
+            case '-': return 12;
+            case '?': return 13; // fallback
+            case 'e': case 'E': return 14; // for scientific notation
+            case '+': return 15;
+            default: return 13; // '?' as fallback
+        }
+    };
+    
+    uint32_t textColor = 0xFFFFFFFF; // White
+    const int baseCharWidth = 6; // 5 pixels + 1 spacing
+    const int baseCharHeight = 7;
+    const int charWidth = static_cast<int>(baseCharWidth * scale);
+    const int charHeight = static_cast<int>(baseCharHeight * scale);
+    
+    // Draw each character
+    for (int charIdx = 0; buffer[charIdx] != '\0' && charIdx < 10; ++charIdx) {
+        int charX = x + charIdx * charWidth;
+        int fontIdx = getCharIndex(buffer[charIdx]);
+        
+        // Draw the character bitmap with scaling
+        for (int row = 0; row < baseCharHeight; ++row) {
+            // When flip_vertically is true, draw from bottom to top to pre-compensate for image flip
+            int actualRow = flip_vertically ? (baseCharHeight - 1 - row) : row;
+            uint8_t rowData = font5x7[fontIdx][actualRow];
+            for (int col = 0; col < 5; ++col) {
+                // Check bit from MSB to LSB (left to right) - bit 7,6,5,4,3
+                if (rowData & (0x80 >> col)) {
+                    // Draw scaled pixel block
+                    for (int sy = 0; sy < static_cast<int>(scale); ++sy) {
+                        for (int sx = 0; sx < static_cast<int>(scale); ++sx) {
+                            int pixelX = charX + col * static_cast<int>(scale) + sx;
+                            int pixelY = y + row * static_cast<int>(scale) + sy;
+                            
+                            if (pixelX >= 0 && pixelX < imageWidth && 
+                                pixelY >= 0 && pixelY < imageHeight) {
+                                int pixelIndex = pixelY * imageWidth + pixelX;
+                                image[pixelIndex] = textColor;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 bool TransferFunctionWidget::LoadState(const std::string &filepath)
 {
     // Read the file
