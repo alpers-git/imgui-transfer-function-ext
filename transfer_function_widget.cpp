@@ -177,12 +177,9 @@ void TransferFunctionWidget::DrawColorMap(bool show_help)
 
     vec2f canvas_size = ImGui::GetContentRegionAvail();
     canvas_size.y /= 3.f;
-    // Note: If you're not using OpenGL for rendering your UI, the setup for
-    // displaying the colormap texture in the UI will need to be updated.
-    size_t tmp = colormap_img;
-    ImGui::Image(reinterpret_cast<void*>(tmp), ImVec2(canvas_size.x, 16));
+    
+    // Get canvas position for the draggable area
     vec2f canvas_pos = ImGui::GetCursorScreenPos();
-    canvas_size.y -= 20;
 
     const float point_radius = 10.f;
 
@@ -191,6 +188,104 @@ void TransferFunctionWidget::DrawColorMap(bool show_help)
 
     const vec2f view_scale(canvas_size.x, -canvas_size.y);
     const vec2f view_offset(canvas_pos.x, canvas_pos.y + canvas_size.y);
+
+    // Get UI background color
+    ImVec4 bgColorVec = ImGui::GetStyleColorVec4(ImGuiCol_WindowBg);
+    ImU32 bgColor = ImColor(bgColorVec);
+    
+    // First fill entire canvas with background color
+    draw_list->AddRectFilled(canvas_pos, 
+                              ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + canvas_size.y), 
+                              bgColor);
+    
+    // Draw colormap only below the opacity curve, with opacity fading based on position
+    // At the curve: full colormap visibility, at bottom (opacity=0): invisible
+    size_t tmp = colormap_img;
+    const int numStrips = static_cast<int>(canvas_size.x);
+    for (int i = 0; i < numStrips; ++i) {
+        float x = canvas_pos.x + static_cast<float>(i);
+        float t = static_cast<float>(i) / canvas_size.x;  // normalized position [0,1]
+        
+        // Find the opacity value at this x position by interpolating between control points
+        float opacity = 0.0f;
+        for (size_t j = 0; j < alpha_control_pts.size() - 1; ++j) {
+            if (t >= alpha_control_pts[j].x && t <= alpha_control_pts[j + 1].x) {
+                float segmentT = (t - alpha_control_pts[j].x) / 
+                                 (alpha_control_pts[j + 1].x - alpha_control_pts[j].x);
+                opacity = alpha_control_pts[j].y + segmentT * 
+                         (alpha_control_pts[j + 1].y - alpha_control_pts[j].y);
+                break;
+            }
+        }
+        
+        // Calculate y position of the curve at this x (screen coords)
+        // curveY is where the curve is; below it (higher y) we draw colormap fading to bottom
+        float curveY = canvas_pos.y + canvas_size.y - opacity * canvas_size.y;
+        float bottomY = canvas_pos.y + canvas_size.y;
+        
+        // Only draw if there's some opacity (curve is above the bottom)
+        if (opacity > 0.001f) {
+            // Draw colormap strip from curve to bottom with fading opacity
+            // UV coords map to the colormap texture horizontally
+            float u = t;
+            ImU32 colAtCurve = IM_COL32(255, 255, 255, static_cast<int>(opacity * 255));
+            ImU32 colAtBottom = IM_COL32(255, 255, 255, 0);
+            
+            // Draw the colormap strip with gradient alpha
+            draw_list->AddRectFilledMultiColor(
+                ImVec2(x, curveY),
+                ImVec2(x + 1.0f, bottomY),
+                colAtCurve, colAtCurve,
+                colAtBottom, colAtBottom);
+        }
+    }
+    
+    // Now overlay the actual colormap texture on top with the alpha mask we just created
+    // We need to redraw - first clear and use a different approach
+    // Actually, let's use proper image drawing with the gradient mask
+    
+    // Clear and redo: draw colormap with per-strip alpha based on curve
+    draw_list->PopClipRect();
+    draw_list->PushClipRect(canvas_pos, canvas_pos + canvas_size);
+    
+    // Fill with background again
+    draw_list->AddRectFilled(canvas_pos, 
+                              ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + canvas_size.y), 
+                              bgColor);
+    
+    // Draw colormap strips below the curve with proper fading
+    for (int i = 0; i < numStrips; ++i) {
+        float x = canvas_pos.x + static_cast<float>(i);
+        float t = static_cast<float>(i) / canvas_size.x;
+        
+        // Find opacity at this x
+        float opacity = 0.0f;
+        for (size_t j = 0; j < alpha_control_pts.size() - 1; ++j) {
+            if (t >= alpha_control_pts[j].x && t <= alpha_control_pts[j + 1].x) {
+                float segmentT = (t - alpha_control_pts[j].x) / 
+                                 (alpha_control_pts[j + 1].x - alpha_control_pts[j].x);
+                opacity = alpha_control_pts[j].y + segmentT * 
+                         (alpha_control_pts[j + 1].y - alpha_control_pts[j].y);
+                break;
+            }
+        }
+        
+        if (opacity > 0.001f) {
+            float curveY = canvas_pos.y + canvas_size.y - opacity * canvas_size.y;
+            float bottomY = canvas_pos.y + canvas_size.y;
+            
+            // Draw colormap image strip from curve down to bottom
+            // Alpha fades from opacity*255 at curve to 0 at bottom
+            ImU32 colTop = IM_COL32(255, 255, 255, static_cast<int>(opacity * 255));
+            ImU32 colBot = IM_COL32(255, 255, 255, 0);
+            
+            draw_list->AddImage(reinterpret_cast<void*>(tmp),
+                ImVec2(x, curveY),
+                ImVec2(x + 1.0f, bottomY),
+                ImVec2(t, 0), ImVec2(t + 1.0f/numStrips, 1),
+                colTop);
+        }
+    }
 
     draw_list->AddRect(canvas_pos, canvas_pos + canvas_size, ImColor(180, 180, 180, 255));
 
