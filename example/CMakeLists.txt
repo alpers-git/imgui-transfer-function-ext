@@ -31,26 +31,29 @@ target_link_libraries(imgui_tfn PUBLIC
 target_compile_definitions(imgui_tfn PUBLIC
     -DIMGUI_IMPL_OPENGL_LOADER_CUSTOM)
 
-add_executable(imgui_tfn_2d
-    main_2d.cpp
-    ../transfer_function_widget_2d.cpp
-    shader.cpp
-	imgui_impl_opengl3.cpp
-    imgui_impl_sdl.cpp
-    ../gl_core_4_5.c)
+# Local 2D transfer function demo, not tracked in git
+if (EXISTS ${CMAKE_CURRENT_LIST_DIR}/main_2d.cpp)
+	add_executable(imgui_tfn_2d
+	    main_2d.cpp
+	    ../transfer_function_widget_2d.cpp
+	    shader.cpp
+		imgui_impl_opengl3.cpp
+	    imgui_impl_sdl.cpp
+	    ../gl_core_4_5.c)
 
-set_target_properties(imgui_tfn_2d PROPERTIES
-	CXX_STANDARD 14
-	CXX_STANDARD_REQUIRED ON)
+	set_target_properties(imgui_tfn_2d PROPERTIES
+		CXX_STANDARD 14
+		CXX_STANDARD_REQUIRED ON)
 
-target_include_directories(imgui_tfn_2d PUBLIC
-	$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
-	$<BUILD_INTERFACE:${SDL2_INCLUDE_DIR}>
-	$<BUILD_INTERFACE:${OPENGL_INCLUDE_DIR}>)
+	target_include_directories(imgui_tfn_2d PUBLIC
+		$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
+		$<BUILD_INTERFACE:${SDL2_INCLUDE_DIR}>
+		$<BUILD_INTERFACE:${OPENGL_INCLUDE_DIR}>)
 
-target_link_libraries(imgui_tfn_2d PUBLIC
-	imgui ${SDL2_LIBRARY} ${OPENGL_LIBRARIES})
+	target_link_libraries(imgui_tfn_2d PUBLIC
+		imgui ${SDL2_LIBRARY} ${OPENGL_LIBRARIES})
 
-target_compile_definitions(imgui_tfn_2d PUBLIC
-    -DIMGUI_IMPL_OPENGL_LOADER_CUSTOM)
+	target_compile_definitions(imgui_tfn_2d PUBLIC
+	    -DIMGUI_IMPL_OPENGL_LOADER_CUSTOM)
+endif()
 

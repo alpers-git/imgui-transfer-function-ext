@@ -64,9 +64,6 @@ if (tf.ColorMapChanged()) upload(tf.GetColormap(), tf.GetResolution());
 `Sample(value, derivative)` evaluates the transfer function on the CPU.
 `SetDerivativeRange()` narrows the derivative axis when derivatives have a long tail.
 
-The `imgui_tfn_2d` example ray marches a synthetic three-material volume using
-the 2D lookup table. Drag on the background to rotate it.
-
 ## Example
 
 See the [example/](example/) for an example use case of the widget
