@@ -26,6 +26,47 @@ and Linear YGB 1211G colormaps. To load additional palettes you can add
 colormaps with `TransferFunctionWidget::add_colormap`, which takes a `Colormap`.
 The Colormap image should be a 1D RGBA8 image. 
 
+## 2D Transfer Function
+
+`transfer_function_widget_2d.h/.cpp` add `ImTF::TransferFunctionWidget2D`, a
+simple 2D transfer function editor following Kniss, Kindlmann and Hansen,
+"Multidimensional Transfer Functions for Interactive Volume Rendering"
+(IEEE TVCG 2002). The horizontal axis is the data value and the vertical axis
+is the first derivative (gradient) magnitude, drawn over their log-scaled joint
+histogram. Material boundaries show up in the histogram as arches. You place
+two kinds of classification widget over them:
+
+- **Triangle** (from the paper): the apex sits on the zero-derivative axis and
+  opacity falls off linearly from the center line. A derivative threshold cuts
+  off its lower part, which removes material interiors.
+- **Box**: constant opacity over a value and derivative range.
+
+The widget does not compute derivatives. You supply them yourself:
+
+```cpp
+ImTF::TransferFunctionWidget2D tf;
+tf.SetValues(voxels);                       // std::vector<float> or pointer + count
+
+// Either a callback, evaluated once per sample...
+tf.SetDerivativeFunction([&](size_t i) { return my_gradient_magnitude(i); });
+// ...or a precomputed array with one derivative per value
+tf.SetDerivatives(gradient_magnitudes);
+
+// In the UI
+tf.DrawColorMap();
+
+// For rendering: an RGBA8 resolution x resolution table, sampled with
+// texture(tf, vec2(value_normalized, derivative_normalized)), normalized with
+// GetValueRange() and GetDerivativeRange()
+if (tf.ColorMapChanged()) upload(tf.GetColormap(), tf.GetResolution());
+```
+
+`Sample(value, derivative)` evaluates the transfer function on the CPU.
+`SetDerivativeRange()` narrows the derivative axis when derivatives have a long tail.
+
+The `imgui_tfn_2d` example ray marches a synthetic three-material volume using
+the 2D lookup table. Drag on the background to rotate it.
+
 ## Example
 
 See the [example/](example/) for an example use case of the widget
