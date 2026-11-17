@@ -63,6 +63,13 @@ if (tf.ColorMapChanged()) upload(tf.GetColormap(), tf.GetResolution());
 
 `Sample(value, derivative)` evaluates the transfer function on the CPU.
 `SetDerivativeRange()` narrows the derivative axis when derivatives have a long tail.
+`DrawOpacityScale()` edits an opacity scale that is returned by `GetOpacityScale()` for the
+application to apply; it is not baked into the lookup table.
+
+Like the 1D widget, `SaveState(path)` writes the opacity scale, the value and derivative
+ranges and the classification widgets to a text file, and `LoadState(path)` reads them back.
+Automatic ranges are saved as the ranges they resolved to, so set the values and derivatives
+before saving.
 
 ## Example
 

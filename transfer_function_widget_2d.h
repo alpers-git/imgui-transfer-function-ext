@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <string>
 #include <vector>
 #include "gl_core_4_5.h"
 #include "imgui.h"
@@ -92,7 +93,14 @@ public:
     bool ColorMapChanged() const;
     // True if the value or derivative range changed since it was last queried
     bool RangeChanged() const;
+    // True if the opacity scale changed since the last call to GetOpacityScale()
+    bool OpacityScaleChanged() const;
     bool Changed() const;
+
+    // Opacity multiplier for the application to apply, not baked into the lookup table
+    float GetOpacityScale();
+    // Draws the widget that edits the opacity scale
+    bool DrawOpacityScale();
 
     // Width and height of the lookup table
     int GetResolution() const;
@@ -120,6 +128,12 @@ public:
     // Restore the default single triangle widget
     void Reset();
 
+    // Load the opacity scale, ranges and classification widgets from a file
+    bool LoadState(const std::string &filepath);
+
+    // Save the opacity scale, ranges and classification widgets to a file
+    bool SaveState(const std::string &filepath);
+
 private:
     enum class DragMode { None, Body, Handle };
 
@@ -141,6 +155,7 @@ private:
     ImVec2 derivative_range = ImVec2(0.f, 1.f);
     bool value_range_auto = true;
     bool derivative_range_auto = true;
+    float opacity_scale = 1.f;
 
     std::vector<ClassificationWidget> widgets;
     std::vector<uint8_t> lut;
@@ -158,6 +173,7 @@ private:
     bool lut_gpu_stale = true;
     bool colormap_changed = true;
     bool range_changed = true;
+    bool opacity_scale_changed = true;
 
     GLuint histogram_tex = 0;
     GLuint lut_tex = 0;

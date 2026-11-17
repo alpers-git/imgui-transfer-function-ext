@@ -2,7 +2,10 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <fstream>
 #include <iostream>
+#include <limits>
+#include <string>
 
 namespace ImTF {
 
@@ -138,9 +141,20 @@ bool TransferFunctionWidget2D::RangeChanged() const
     return range_changed;
 }
 
+bool TransferFunctionWidget2D::OpacityScaleChanged() const
+{
+    return opacity_scale_changed;
+}
+
 bool TransferFunctionWidget2D::Changed() const
 {
-    return colormap_changed || range_changed;
+    return colormap_changed || range_changed || opacity_scale_changed;
+}
+
+float TransferFunctionWidget2D::GetOpacityScale()
+{
+    opacity_scale_changed = false;
+    return opacity_scale;
 }
 
 int TransferFunctionWidget2D::GetResolution() const
@@ -222,6 +236,83 @@ void TransferFunctionWidget2D::Reset()
     w.color[2] = 0.2f;
     w.opacity = 0.6f;
     SetWidgets({w});
+}
+
+bool TransferFunctionWidget2D::LoadState(const std::string &filepath)
+{
+    std::ifstream fp;
+    fp.open(filepath, std::ios::in | std::ios::binary);
+    if (!fp.is_open()) {
+        printf("Could not open file %s\n", filepath.c_str());
+        return false;
+    }
+
+    // Read everything first so that a malformed file leaves the state unchanged
+    float scale = 1.f;
+    ImVec2 vrange, drange;
+    size_t num_widgets = 0;
+    fp >> scale >> vrange.x >> vrange.y >> drange.x >> drange.y >> num_widgets;
+    std::vector<ClassificationWidget> loaded;
+    for (size_t i = 0; fp && i < num_widgets; ++i) {
+        ClassificationWidget w;
+        std::string shape;
+        fp >> shape >> w.x_min >> w.x_max >> w.y_min >> w.y_max >> w.color[0] >> w.color[1] >>
+            w.color[2] >> w.opacity;
+        if (shape == "triangle") {
+            w.shape = Shape::Triangle;
+        } else if (shape == "box") {
+            w.shape = Shape::Box;
+        } else {
+            fp.setstate(std::ios::failbit);
+        }
+        loaded.push_back(w);
+    }
+    if (!fp) {
+        printf("Could not read a 2D transfer function from file %s\n", filepath.c_str());
+        return false;
+    }
+    fp.close();
+
+    opacity_scale = std::max(scale, 0.f);
+    opacity_scale_changed = true;
+    SetValueRange(vrange.x, vrange.y);
+    SetDerivativeRange(drange.x, drange.y);
+    SetWidgets(loaded);
+    printf("Transferfunction read from file %s\n", filepath.c_str());
+    return true;
+}
+
+bool TransferFunctionWidget2D::SaveState(const std::string &filepath)
+{
+    std::ofstream fp;
+    fp.open(filepath, std::ios::out | std::ios::binary);
+    if (!fp.is_open()) {
+        printf("Could not open file %s\n", filepath.c_str());
+        return false;
+    }
+
+    // Automatic ranges are resolved from the data and saved as fixed ones
+    if (histogram_stale) {
+        RebuildHistogram();
+    }
+    // Enough digits for every float to read back unchanged
+    fp.precision(std::numeric_limits<float>::max_digits10);
+    fp << opacity_scale << std::endl;
+    fp << value_range.x << " " << value_range.y << std::endl;
+    fp << derivative_range.x << " " << derivative_range.y << std::endl;
+    fp << widgets.size() << std::endl;
+    for (const auto &w : widgets) {
+        fp << (w.shape == Shape::Triangle ? "triangle" : "box") << " " << w.x_min << " "
+           << w.x_max << " " << w.y_min << " " << w.y_max << " " << w.color[0] << " "
+           << w.color[1] << " " << w.color[2] << " " << w.opacity << std::endl;
+    }
+    fp.close();
+    if (!fp) {
+        printf("Could not write file %s\n", filepath.c_str());
+        return false;
+    }
+    printf("Transferfunction written to file %s\n", filepath.c_str());
+    return true;
 }
 
 void TransferFunctionWidget2D::InvalidateLUT()
@@ -748,6 +839,21 @@ void TransferFunctionWidget2D::DrawSelectedWidgetEditor()
         drag_mode = DragMode::None;
         InvalidateLUT();
     }
+}
+
+bool TransferFunctionWidget2D::DrawOpacityScale()
+{
+    if (noGui) {
+        std::cerr << "TransferFunctionWidget2D::DrawOpacityScale() called with noGui set to true\n";
+        return false;
+    }
+    ImGui::PushID(this);
+    const bool changed = ImGui::DragFloat("Opacity scale", &opacity_scale, 0.01f, 0.f, 1e20f);
+    ImGui::PopID();
+    if (changed) {
+        opacity_scale_changed = true;
+    }
+    return changed;
 }
 
 }
